@@ -20,9 +20,9 @@ export function JobCard({ type, status, result, resultInsight }: JobCardProps) {
         isFailed ? 'border-red-500/20' :
             isProcessing ? 'border-blue-500/20' : 'border-border';
 
-    const statusBg = isCompleted ? 'bg-green-500/10 hover:bg-green-500/15 border-green-500/30' :
-        isFailed ? 'bg-red-500/10 hover:bg-red-500/15 border-red-500/30' :
-            isProcessing ? 'bg-blue-500/10 hover:bg-blue-500/15 border-blue-500/30' : 'bg-card/80 hover:bg-card/90 border-border';
+    const statusBg = isCompleted ? 'bg-green-500/20 hover:bg-green-500/30 border-green-500/40' :
+        isFailed ? 'bg-red-500/20 hover:bg-red-500/30 border-red-500/40' :
+            isProcessing ? 'bg-blue-500/20 hover:bg-blue-500/30 border-blue-500/40' : 'bg-card/80 hover:bg-card/90 border-border';
 
     return (
         <div className={cn(
