@@ -1,0 +1,23 @@
+{
+    "name": "emma-worker-app",
+    "version": "0.0.0",
+    "private": true,
+    "scripts": {
+        "build": "turbo run build",
+        "dev": "turbo run dev",
+        "lint": "turbo run lint",
+        "clean": "turbo run clean",
+        "db:generate": "turbo run db:generate",
+        "db:push": "turbo run db:push",
+        "db:migrate": "turbo run db:migrate"
+    },
+    "devDependencies": {
+        "turbo": "latest",
+        "prettier": "^3.0.0"
+    },
+    "workspaces": [
+        "apps/*",
+        "packages/*"
+    ],
+    "packageManager": "npm@11.6.2"
+}
