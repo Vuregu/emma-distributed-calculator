@@ -1,0 +1,75 @@
+name: Deploy to DigitalOcean
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm install
+      - name: Run tests
+        run: npm run test
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm install
+      - name: Run lint
+        run: npm run lint
+
+  build_and_push:
+    needs: [test, lint]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout the repo
+        uses: actions/checkout@v4
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+      - name: Log in to DigitalOcean Container Registry
+        run: doctl registry login --expiry-seconds 600
+
+      - name: Build and push Web image
+        run: |
+          docker build --build-arg NEXT_PUBLIC_WORKER_URL=${{ vars.NEXT_PUBLIC_WORKER_URL }} -t registry.digitalocean.com/${{ secrets.REGISTRY_NAME }}/emma-web:latest -f apps/web/Dockerfile .
+          docker push registry.digitalocean.com/${{ secrets.REGISTRY_NAME }}/emma-web:latest
+
+      - name: Build and push Worker image
+        run: |
+          docker build -t registry.digitalocean.com/${{ secrets.REGISTRY_NAME }}/emma-worker:latest -f apps/worker/Dockerfile .
+          docker push registry.digitalocean.com/${{ secrets.REGISTRY_NAME }}/emma-worker:latest
+
+  deploy:
+    needs: build_and_push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+      # This assumes App Platform is used. If using Droplet/Docker Compose, this would differ.
+      - name: Update App Platform
+        run: |
+          doctl apps update ${{ secrets.APP_ID }} --spec .do/app.yaml
