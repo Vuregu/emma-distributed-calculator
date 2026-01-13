@@ -1,4 +1,3 @@
-import '@testing-library/jest-dom';
 import { vi } from 'vitest';
 
 // Mock console.error and console.warn to reduce bloat in tests
