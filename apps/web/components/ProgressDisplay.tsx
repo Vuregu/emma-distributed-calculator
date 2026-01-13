@@ -12,7 +12,11 @@ interface ProgressDisplayProps {
     onJobUpdate?: (jobGroupId: string, updatedJob: any) => void;
 }
 
-export function ProgressDisplay({ jobGroupId, initialJobs = [], onJobUpdate }: ProgressDisplayProps) {
+const EMPTY_JOBS: any[] = [];
+
+const OPERATIONS = ['ADD', 'SUBTRACT', 'MULTIPLY', 'DIVIDE'];
+
+export function ProgressDisplay({ jobGroupId, initialJobs = EMPTY_JOBS, onJobUpdate }: ProgressDisplayProps) {
     // We map jobs by ID or Type. Type is easier for the UI grid.
     // Let's assume we know there are 4 types.
     const [jobs, setJobs] = useState<Record<string, any>>({}); // Map type -> Job Data
@@ -43,9 +47,9 @@ export function ProgressDisplay({ jobGroupId, initialJobs = [], onJobUpdate }: P
                 const next = { ...prev };
                 const type = updatedJob.type;
 
-                // 1. Try to match by type directly if it exists in the payload
-                if (type && next[type]) {
-                    next[type] = { ...next[type], ...updatedJob };
+                // 1. Try to match by type directly if it exists in the payload or is a valid operation
+                if (type && (next[type] || OPERATIONS.includes(type))) {
+                    next[type] = { ...(next[type] || {}), ...updatedJob };
                 }
                 // 2. Fallback: Search all types for matching jobId
                 else {
@@ -65,8 +69,7 @@ export function ProgressDisplay({ jobGroupId, initialJobs = [], onJobUpdate }: P
         };
     }, [jobGroupId]);
 
-    const operations = ['ADD', 'SUBTRACT', 'MULTIPLY', 'DIVIDE'];
-    const totalJobs = operations.length;
+    const totalJobs = OPERATIONS.length;
     const completedJobs = Object.values(jobs).filter(j => j.status === 'COMPLETED' || j.status === 'FAILED').length;
     const progress = (completedJobs / totalJobs) * 100;
 
@@ -81,7 +84,7 @@ export function ProgressDisplay({ jobGroupId, initialJobs = [], onJobUpdate }: P
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {operations.map(op => {
+                {OPERATIONS.map(op => {
                     const job = jobs[op];
                     return (
                         <JobCard
