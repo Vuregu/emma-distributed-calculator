@@ -1,11 +1,12 @@
 FROM node:20-alpine AS base
+RUN apk add --no-cache libc6-compat openssl
+RUN npm install -g npm@11.6.2
 
 FROM base AS builder
-# Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
-RUN apk add --no-cache libc6-compat
+
 # Set working directory
 WORKDIR /app
-# Install turbo globaly
+# Install turbo and other global deps
 RUN npm install -g turbo
 COPY . .
 # Prune the workspace to only include the "web" app
@@ -13,7 +14,7 @@ RUN turbo prune --scope=web --docker
 
 # Add lockfile and package.json's of isolated subworkspace
 FROM base AS installer
-RUN apk add --no-cache libc6-compat
+
 WORKDIR /app
 
 # First install dependencies (as they change less often)

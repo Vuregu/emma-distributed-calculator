@@ -49,7 +49,7 @@ vi.mock('next/server', () => ({
 }));
 
 vi.mock('@/lib/queue', () => ({
-    calculationQueue: mocks.queue,
+    getCalculationQueue: () => mocks.queue,
 }));
 
 vi.mock('zod', () => ({

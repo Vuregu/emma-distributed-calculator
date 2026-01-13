@@ -1,6 +1,6 @@
 import { auth } from '@/auth';
 import { prisma } from '@/lib/db';
-import { calculationQueue } from '@/lib/queue';
+import { getCalculationQueue } from '@/lib/queue';
 import { Job } from '@repo/database';
 import { JobPayload } from '@repo/types';
 import { NextResponse } from 'next/server';
@@ -55,7 +55,7 @@ export async function POST(req: Request) {
                 b,
                 operation: job.type as JobPayload['operation']
             };
-            return calculationQueue.add('compute', payload);
+            return getCalculationQueue().add('compute', payload);
         });
 
         await Promise.all(queuePromises);

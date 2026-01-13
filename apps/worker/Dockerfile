@@ -1,14 +1,20 @@
 FROM node:20-alpine AS base
+RUN apk add --no-cache libc6-compat openssl
+RUN npm install -g npm@11.6.2
 
 FROM base AS builder
-RUN apk add --no-cache libc6-compat
+
+# Set working directory
 WORKDIR /app
+# Install turbo and other global deps
 RUN npm install -g turbo
 COPY . .
+# Prune the workspace to only include the "worker" app
 RUN turbo prune --scope=worker --docker
 
+# Add lockfile and package.json's of isolated subworkspace
 FROM base AS installer
-RUN apk add --no-cache libc6-compat
+
 WORKDIR /app
 
 # First install dependencies (as they change less often)
