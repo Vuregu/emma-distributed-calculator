@@ -42,14 +42,16 @@ export function HistoryTable({ history, onSelect }: HistoryTableProps) {
                                     <td className="p-5 text-muted-foreground font-medium">
                                         {formatDistanceToNow(new Date(group.createdAt), { addSuffix: true })}
                                     </td>
-                                    <td className="p-5 font-mono text-xs md:text-sm text-foreground/80">
-                                        <span className="bg-background/80 px-2 py-1 rounded border border-border/50">
-                                            A: {group.a}
-                                        </span>
-                                        <span className="mx-2 text-muted-foreground">&</span>
-                                        <span className="bg-background/80 px-2 py-1 rounded border border-border/50">
-                                            B: {group.b}
-                                        </span>
+                                    <td className="p-5 font-mono text-xs md:text-sm text-foreground/80 whitespace-nowrap">
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="bg-background/80 px-2 py-1 rounded border border-border/50">
+                                                A: {group.a}
+                                            </span>
+                                            <span className="text-muted-foreground font-sans">&</span>
+                                            <span className="bg-background/80 px-2 py-1 rounded border border-border/50">
+                                                B: {group.b}
+                                            </span>
+                                        </div>
                                     </td>
                                     <td className="p-5">
                                         <span className={cn("inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border theme-transition",
