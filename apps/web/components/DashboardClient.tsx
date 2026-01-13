@@ -1,59 +1,81 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { io } from 'socket.io-client';
 import { InputForm } from './InputForm';
 import { ProgressDisplay } from './ProgressDisplay';
 import { HistoryTable } from './HistoryTable';
 import { Job, JobGroup } from '@repo/database';
+import { JobResult } from '@repo/types';
 
 interface DashboardClientProps {
     initialHistory: (JobGroup & { jobs: Job[] })[];
+    userId: string;
 }
 
-export function DashboardClient({ initialHistory }: DashboardClientProps) {
+export function DashboardClient({ initialHistory, userId }: DashboardClientProps) {
     const [history, setHistory] = useState<(JobGroup & { jobs: Job[] })[]>(initialHistory);
     const [activeJobGroupId, setActiveJobGroupId] = useState<string | null>(null);
-    const [activeJobs, setActiveJobs] = useState<Job[]>([]);
 
-    // Merge new runs into history locally? Or just refetch? 
-    // Simplicity: InputForm submission sets active ID.
-    // If we select history, we set active ID and active Jobs.
+    // Derive active group and jobs directly from history
+    const activeGroup = history.find(g => g.id === activeJobGroupId);
+    const activeJobs = activeGroup?.jobs || [];
+
+    useEffect(() => {
+        if (!activeJobGroupId) return;
+
+        const workerUrl = process.env.NEXT_PUBLIC_WORKER_URL || 'http://localhost:3001';
+        const socket = io(workerUrl);
+
+        socket.emit('join_job_group', activeJobGroupId);
+
+        socket.on('job_update', (data: JobResult) => {
+            setHistory(prev => prev.map(group => {
+                if (group.id === activeJobGroupId) {
+                    const jobs = group.jobs;
+                    const jobIndex = jobs.findIndex(j => j.id === data.jobId);
+                    let updatedJobs: Job[];
+
+                    if (jobIndex > -1) {
+                        updatedJobs = jobs.map(job =>
+                            job.id === data.jobId ? {
+                                ...job,
+                                status: data.status,
+                                result: data.result ?? null,
+                                resultInsight: data.resultInsight ?? null
+                            } : job
+                        );
+                    } else {
+                        updatedJobs = jobs;
+                    }
+
+                    return { ...group, jobs: updatedJobs };
+                }
+                return group;
+            }));
+        });
+
+        return () => {
+            socket.disconnect();
+        };
+    }, [activeJobGroupId]);
 
     const handleJobStarted = (id: string, jobs?: Job[], a?: number, b?: number) => {
         setActiveJobGroupId(id);
-        if (jobs) {
-            setActiveJobs(jobs);
 
-            // If we have input params, it means it's a new job from InputForm. 
-            // Add to history.
-            if (a !== undefined && b !== undefined) {
-                const newHistoryItem = {
-                    id,
-                    createdAt: new Date(), // Now
-                    a,
-                    b,
-                    jobs
-                };
-                setHistory(prev => [newHistoryItem, ...prev]);
-            }
-        } else {
-            setActiveJobs([]);
+        // If we have input params, it means it's a new job from InputForm. 
+        // Add to history.
+        if (jobs && a !== undefined && b !== undefined) {
+            const newHistoryItem = {
+                id,
+                createdAt: new Date(), // Now
+                a,
+                b,
+                userId,
+                jobs
+            };
+            setHistory(prev => [newHistoryItem, ...prev]);
         }
-    };
-
-    const handleJobUpdate = (jobGroupId: string, updatedJob: Job) => {
-        setHistory(prev => prev.map(group => {
-            if (group.id === jobGroupId) {
-                const updatedJobs = group.jobs.map((job: Job) => {
-                    if (job.id === updatedJob.jobId) {
-                        return { ...job, ...updatedJob };
-                    }
-                    return job;
-                });
-                return { ...group, jobs: updatedJobs };
-            }
-            return group;
-        }));
     };
 
     return (
@@ -86,9 +108,7 @@ export function DashboardClient({ initialHistory }: DashboardClientProps) {
                                 </span>
                             </div>
                             <ProgressDisplay
-                                jobGroupId={activeJobGroupId}
-                                initialJobs={activeJobs}
-                                onJobUpdate={handleJobUpdate}
+                                jobs={activeJobs}
                             />
                         </div>
                     ) : (

@@ -1,6 +1,7 @@
 import { formatDistanceToNow } from 'date-fns';
 import { Button } from './ui/button'; // shadcn
 import { Job, JobGroup } from '@repo/database';
+import { cn } from '@/lib/utils';
 
 interface HistoryTableProps {
     history: (JobGroup & { jobs: Job[] })[];
@@ -79,6 +80,3 @@ export function HistoryTable({ history, onSelect }: HistoryTableProps) {
         </div>
     );
 }
-
-// Helper for classnames if utils not imported (but it should be)
-import { cn } from '@/lib/utils';

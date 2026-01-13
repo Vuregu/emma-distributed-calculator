@@ -14,5 +14,5 @@ export default async function DashboardPage() {
         take: 10
     });
 
-    return <DashboardClient initialHistory={history} />;
+    return <DashboardClient initialHistory={history} userId={session.user.id} />;
 }

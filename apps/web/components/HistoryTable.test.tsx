@@ -23,12 +23,13 @@ describe('HistoryTable', () => {
         const history = [
             {
                 id: 'group-1',
-                createdAt: new Date().toISOString(),
+                createdAt: new Date(),
                 a: 10,
                 b: 5,
+                userId: 'user-1',
                 jobs: [
-                    { status: 'COMPLETED' },
-                    { status: 'COMPLETED' }
+                    { id: 'j1', status: 'COMPLETED', type: 'ADD', result: 15, resultInsight: null, jobGroupId: 'group-1' },
+                    { id: 'j2', status: 'COMPLETED', type: 'SUBTRACT', result: 5, resultInsight: null, jobGroupId: 'group-1' }
                 ]
             }
         ];
@@ -44,9 +45,10 @@ describe('HistoryTable', () => {
         const history = [
             {
                 id: 'group-1',
-                createdAt: new Date().toISOString(),
+                createdAt: new Date(),
                 a: 10,
                 b: 5,
+                userId: 'user-1',
                 jobs: []
             }
         ];
