@@ -44,10 +44,11 @@ export function InputForm({ onJobStarted }: InputFormProps) {
 
             <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                    <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    <label htmlFor="value-a" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                         Value A
                     </label>
                     <input
+                        id="value-a"
                         type="number"
                         step="any"
                         value={a} onChange={e => setA(e.target.value)}
@@ -57,10 +58,11 @@ export function InputForm({ onJobStarted }: InputFormProps) {
                     />
                 </div>
                 <div className="space-y-2">
-                    <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    <label htmlFor="value-b" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                         Value B
                     </label>
                     <input
+                        id="value-b"
                         type="number"
                         step="any"
                         value={b} onChange={e => setB(e.target.value)}

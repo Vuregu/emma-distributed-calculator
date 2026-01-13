@@ -9,7 +9,8 @@
         "clean": "turbo run clean",
         "db:generate": "turbo run db:generate",
         "db:push": "turbo run db:push",
-        "db:migrate": "turbo run db:migrate"
+        "db:migrate": "turbo run db:migrate",
+        "test": "turbo run test"
     },
     "devDependencies": {
         "turbo": "latest",

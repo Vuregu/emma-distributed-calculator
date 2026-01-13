@@ -7,7 +7,7 @@ import { JobPayload, JobResult } from '@repo/types';
 
 const prisma = new PrismaClient();
 
-const processJob = async (job: Job<JobPayload>) => {
+export const processJob = async (job: Job<JobPayload>) => {
     const { jobId, jobGroupId, a, b, operation } = job.data;
     const io = getSocketIO();
 
