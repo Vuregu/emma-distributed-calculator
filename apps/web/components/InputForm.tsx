@@ -24,7 +24,7 @@ export function InputForm({ onJobStarted }: InputFormProps) {
             });
             const data = await res.json();
             if (data.jobGroupId) {
-                onJobStarted(data.jobGroupId);
+                onJobStarted(data.jobGroupId, data.jobs);
             }
         } catch (error) {
             console.error("Failed to start job", error);

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { JobResult } from '@repo/types';
 import { JobCard } from './JobCard';
+import { Progress } from './ui/progress';
 
 interface ProgressDisplayProps {
     jobGroupId: string;
@@ -30,25 +31,23 @@ export function ProgressDisplay({ jobGroupId, initialJobs = [] }: ProgressDispla
         socket.emit('join_job_group', jobGroupId);
 
         socket.on('job_update', (updatedJob: any) => {
-            // We need to know the TYPE to update the correct card, 
-            // but the update might only have ID.
-            // Ideally the update has ID, and we match it to our list.
-            // But for simplicity, let's just refetch or assume we can match by ID if we stored it.
-
-            // To make this robust:
-            // 1. We should have a list of all 4 job IDs mapped to types.
-            // 2. OR just list the cards by ID? But user wants "ADD, SUBTRACT..." labels.
-
-            // Let's update state by matching ID.
             setJobs(prev => {
                 const next = { ...prev };
-                for (const type in next) {
-                    if (next[type].id === updatedJob.jobId) {
-                        next[type] = { ...next[type], ...updatedJob };
+                const type = updatedJob.type;
+
+                // 1. Try to match by type directly if it exists in the payload
+                if (type && next[type]) {
+                    next[type] = { ...next[type], ...updatedJob };
+                }
+                // 2. Fallback: Search all types for matching jobId
+                else {
+                    for (const t in next) {
+                        if (next[t].id === updatedJob.jobId) {
+                            next[t] = { ...next[t], ...updatedJob };
+                            break;
+                        }
                     }
                 }
-                // If we didn't search by ID, we might miss it if we only have types?
-                // The update handles status, result, insight.
                 return next;
             });
         });
@@ -59,21 +58,34 @@ export function ProgressDisplay({ jobGroupId, initialJobs = [] }: ProgressDispla
     }, [jobGroupId]);
 
     const operations = ['ADD', 'SUBTRACT', 'MULTIPLY', 'DIVIDE'];
+    const totalJobs = operations.length;
+    const completedJobs = Object.values(jobs).filter(j => j.status === 'COMPLETED' || j.status === 'FAILED').length;
+    const progress = (completedJobs / totalJobs) * 100;
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
-            {operations.map(op => {
-                const job = jobs[op];
-                return (
-                    <JobCard
-                        key={op}
-                        type={op}
-                        status={job?.status || 'PENDING'}
-                        result={job?.result}
-                        resultInsight={job?.resultInsight}
-                    />
-                );
-            })}
+        <div className="space-y-6 mt-8">
+            <div className="space-y-2">
+                <div className="flex justify-between text-sm font-medium">
+                    <span>Overall Progress</span>
+                    <span>{Math.round(progress)}% ({completedJobs}/{totalJobs})</span>
+                </div>
+                <Progress value={progress} className="h-4" />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {operations.map(op => {
+                    const job = jobs[op];
+                    return (
+                        <JobCard
+                            key={op}
+                            type={op}
+                            status={job?.status || 'PENDING'}
+                            result={job?.result}
+                            resultInsight={job?.resultInsight}
+                        />
+                    );
+                })}
+            </div>
         </div>
     );
 }

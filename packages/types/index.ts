@@ -8,7 +8,8 @@ export interface JobPayload {
 
 export type JobResult = {
     jobId: string;
-    result: number;
+    type: 'ADD' | 'SUBTRACT' | 'MULTIPLY' | 'DIVIDE';
+    result?: number;
     resultInsight?: string;
-    status: 'COMPLETED' | 'FAILED';
+    status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
 };

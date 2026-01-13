@@ -22,11 +22,13 @@ const processJob = async (job: Job<JobPayload>) => {
 
         io.to(jobGroupId).emit('job_update', {
             jobId,
+            type: operation,
             status: 'PROCESSING'
         });
 
-        // Simulate delay
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        // Simulate processing delay (configurable)
+        const delay = process.env.JOB_PROCESS_DELAY ? parseInt(process.env.JOB_PROCESS_DELAY) : 3000;
+        await new Promise(resolve => setTimeout(resolve, delay));
 
         // 1. Deterministic Calculation
         let result: number;
@@ -54,6 +56,7 @@ const processJob = async (job: Job<JobPayload>) => {
         // Emit Complete
         const jobResult: JobResult = {
             jobId,
+            type: operation,
             result,
             resultInsight,
             status: 'COMPLETED'
@@ -70,6 +73,7 @@ const processJob = async (job: Job<JobPayload>) => {
         });
         io.to(jobGroupId).emit('job_update', {
             jobId,
+            type: operation,
             status: 'FAILED'
         });
         throw error;

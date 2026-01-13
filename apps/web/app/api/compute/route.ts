@@ -70,7 +70,10 @@ export async function POST(req: Request) {
 
         await Promise.all(queuePromises);
 
-        return NextResponse.json({ jobGroupId: jobGroup.id });
+        return NextResponse.json({
+            jobGroupId: jobGroup.id,
+            jobs: createdJobs
+        });
 
     } catch (error) {
         console.error(error);

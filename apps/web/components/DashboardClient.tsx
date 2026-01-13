@@ -19,8 +19,11 @@ export function DashboardClient({ initialHistory }: DashboardClientProps) {
 
     const handleJobStarted = (id: string, jobs?: any[]) => {
         setActiveJobGroupId(id);
-        if (jobs) setActiveJobs(jobs);
-        else setActiveJobs([]); // ProgressDisplay will fetch or start empty/listen
+        if (jobs) {
+            setActiveJobs(jobs);
+        } else {
+            setActiveJobs([]);
+        }
     };
 
     return (
