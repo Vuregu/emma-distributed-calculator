@@ -16,6 +16,9 @@
         "turbo": "latest",
         "prettier": "^3.0.0"
     },
+    "optionalDependencies": {
+        "@rollup/rollup-linux-x64-gnu": "*"
+    },
     "workspaces": [
         "apps/*",
         "packages/*"
