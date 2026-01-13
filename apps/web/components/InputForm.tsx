@@ -3,8 +3,10 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 
+import { Job } from '@repo/database';
+
 interface InputFormProps {
-    onJobStarted: (jobGroupId: string, jobs: any[], a: number, b: number) => void;
+    onJobStarted: (jobGroupId: string, jobs: Job[], a: number, b: number) => void;
 }
 
 export function InputForm({ onJobStarted }: InputFormProps) {

@@ -4,21 +4,22 @@ import { useState } from 'react';
 import { InputForm } from './InputForm';
 import { ProgressDisplay } from './ProgressDisplay';
 import { HistoryTable } from './HistoryTable';
+import { Job, JobGroup } from '@repo/database';
 
 interface DashboardClientProps {
-    initialHistory: any[];
+    initialHistory: (JobGroup & { jobs: Job[] })[];
 }
 
 export function DashboardClient({ initialHistory }: DashboardClientProps) {
-    const [history, setHistory] = useState<any[]>(initialHistory);
+    const [history, setHistory] = useState<(JobGroup & { jobs: Job[] })[]>(initialHistory);
     const [activeJobGroupId, setActiveJobGroupId] = useState<string | null>(null);
-    const [activeJobs, setActiveJobs] = useState<any[]>([]);
+    const [activeJobs, setActiveJobs] = useState<Job[]>([]);
 
     // Merge new runs into history locally? Or just refetch? 
     // Simplicity: InputForm submission sets active ID.
     // If we select history, we set active ID and active Jobs.
 
-    const handleJobStarted = (id: string, jobs?: any[], a?: number, b?: number) => {
+    const handleJobStarted = (id: string, jobs?: Job[], a?: number, b?: number) => {
         setActiveJobGroupId(id);
         if (jobs) {
             setActiveJobs(jobs);
@@ -40,10 +41,10 @@ export function DashboardClient({ initialHistory }: DashboardClientProps) {
         }
     };
 
-    const handleJobUpdate = (jobGroupId: string, updatedJob: any) => {
+    const handleJobUpdate = (jobGroupId: string, updatedJob: Job) => {
         setHistory(prev => prev.map(group => {
             if (group.id === jobGroupId) {
-                const updatedJobs = group.jobs.map((job: any) => {
+                const updatedJobs = group.jobs.map((job: Job) => {
                     if (job.id === updatedJob.jobId) {
                         return { ...job, ...updatedJob };
                     }

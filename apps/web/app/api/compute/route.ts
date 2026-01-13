@@ -1,6 +1,7 @@
 import { auth } from '@/auth';
 import { prisma } from '@/lib/db';
 import { calculationQueue } from '@/lib/queue';
+import { Job } from '@repo/database';
 import { JobPayload } from '@repo/types';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
@@ -46,13 +47,13 @@ export async function POST(req: Request) {
         );
 
         // Add to BullMQ
-        const queuePromises = createdJobs.map((job: any) => {
+        const queuePromises = createdJobs.map((job: Job) => {
             const payload: JobPayload = {
                 jobGroupId: jobGroup.id,
                 jobId: job.id,
                 a,
                 b,
-                operation: job.type as any
+                operation: job.type as JobPayload['operation']
             };
             return calculationQueue.add('compute', payload);
         });

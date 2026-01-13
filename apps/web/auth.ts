@@ -37,6 +37,6 @@ const nextAuth = NextAuth({
             },
         }),
     ],
-}) as any;
+}) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
 export const { handlers, auth, signIn, signOut } = nextAuth;

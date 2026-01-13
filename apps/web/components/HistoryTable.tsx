@@ -1,9 +1,10 @@
 import { formatDistanceToNow } from 'date-fns';
 import { Button } from './ui/button'; // shadcn
+import { Job, JobGroup } from '@repo/database';
 
 interface HistoryTableProps {
-    history: any[];
-    onSelect: (jobGroupId: string, jobs: any[]) => void;
+    history: (JobGroup & { jobs: Job[] })[];
+    onSelect: (jobGroupId: string, jobs: Job[]) => void;
 }
 
 export function HistoryTable({ history, onSelect }: HistoryTableProps) {
@@ -34,7 +35,7 @@ export function HistoryTable({ history, onSelect }: HistoryTableProps) {
                             </tr>
                         )}
                         {history.map((group) => {
-                            const isCompleted = group.jobs.every((j: any) => j.status === 'COMPLETED');
+                            const isCompleted = group.jobs.every((j: Job) => j.status === 'COMPLETED');
                             const status = isCompleted ? 'Completed' : 'Processing/Failed';
 
                             return (

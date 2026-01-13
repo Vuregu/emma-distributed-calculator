@@ -4,28 +4,29 @@ import { useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
 import { JobCard } from './JobCard';
 import { Progress } from './ui/progress';
+import { Job } from '@repo/database';
 
 interface ProgressDisplayProps {
     jobGroupId: string;
-    initialJobs?: any[]; // Pass initial DB state if available
-    onJobUpdate?: (jobGroupId: string, updatedJob: any) => void;
+    initialJobs?: Job[]; // Pass initial DB state if available
+    onJobUpdate?: (jobGroupId: string, updatedJob: Job) => void;
 }
 
-const EMPTY_JOBS: any[] = [];
+const EMPTY_JOBS: Job[] = [];
 
 const OPERATIONS = ['ADD', 'SUBTRACT', 'MULTIPLY', 'DIVIDE'];
 
 export function ProgressDisplay({ jobGroupId, initialJobs = EMPTY_JOBS, onJobUpdate }: ProgressDisplayProps) {
     // We map jobs by ID or Type. Type is easier for the UI grid.
     // Let's assume we know there are 4 types.
-    const [jobs, setJobs] = useState<Record<string, any>>({}); // Map type -> Job Data
+    const [jobs, setJobs] = useState<Record<string, Job>>({}); // Map type -> Job Data
 
     useEffect(() => {
         // Initialize state from initialJobs
         const validJobs = initialJobs.reduce((acc, job) => {
             acc[job.type] = job;
             return acc;
-        }, {} as Record<string, any>);
+        }, {} as Record<string, Job>);
         setJobs(prev => ({ ...prev, ...validJobs }));
     }, [initialJobs]);
 
@@ -35,7 +36,7 @@ export function ProgressDisplay({ jobGroupId, initialJobs = EMPTY_JOBS, onJobUpd
 
         socket.emit('join_job_group', jobGroupId);
 
-        socket.on('job_update', (updatedJob: any) => {
+        socket.on('job_update', (updatedJob: Job) => {
             console.log("Socket Update Received:", updatedJob);
 
             // Notify parent to update history/state
