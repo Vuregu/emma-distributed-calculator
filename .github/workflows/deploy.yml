@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   test:
@@ -41,7 +42,7 @@ jobs:
   build_and_push:
     needs: [test, lint]
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main'
     steps:
       - name: Checkout the repo
         uses: actions/checkout@v4
