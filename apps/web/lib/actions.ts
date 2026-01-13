@@ -5,9 +5,6 @@ import { AuthError } from 'next-auth';
 import { z } from 'zod';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/db';
-// import { PrismaClient } from '@repo/database';
-
-// const prisma = new PrismaClient();
 
 export async function authenticate(
     prevState: string | undefined,
@@ -59,14 +56,10 @@ export async function register(
                 name,
             },
         });
-    } catch (e) {
+    } catch {
         return 'Failed to create user.';
     }
 
-    // Auto login after register? Or redirect to login?
-    // Start with redirect to login or just call signIn?
-    // Let's redirect manually or let the UI handle it.
-    // Actually, calling signIn here works too.
     try {
         await signIn('credentials', { email, password });
     } catch (error) {

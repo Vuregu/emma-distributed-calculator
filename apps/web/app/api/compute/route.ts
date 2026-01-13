@@ -34,18 +34,7 @@ export async function POST(req: Request) {
 
         const operations = ['ADD', 'SUBTRACT', 'MULTIPLY', 'DIVIDE'] as const;
 
-        // Create Jobs and Queue them
-        const jobsData = operations.map(op => ({
-            type: op,
-            status: 'PENDING',
-            jobGroupId: jobGroup.id
-        }));
-
-        // Batch create jobs in DB to get IDs
-        // Prisma createMany doesn't return IDs in all adapters easily, but we need IDs for the queue payload.
-        // So we use $transaction or map create.
-
-        // We'll insert one by one or Promise.all to get IDs.
+        // Create jobs in transaction to get IDs for queue payloads
         const createdJobs = await prisma.$transaction(
             operations.map(op => prisma.job.create({
                 data: {

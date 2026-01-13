@@ -8,14 +8,17 @@
     "scripts": {
         "db:generate": "prisma generate",
         "db:push": "prisma db push",
-        "db:migrate": "prisma migrate dev"
+        "db:migrate": "prisma migrate dev",
+        "lint": "eslint . --max-warnings 0"
     },
     "dependencies": {
         "@prisma/client": "^5.0.0"
     },
     "devDependencies": {
+        "@repo/eslint-config": "*",
         "@repo/typescript-config": "*",
         "@types/node": "^20.0.0",
+        "eslint": "^9.0.0",
         "prisma": "^5.0.0",
         "typescript": "^5.0.0"
     }

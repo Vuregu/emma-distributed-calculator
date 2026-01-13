@@ -1,6 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
 import { redisConnection } from './redis';
-import { Redis } from 'ioredis';
 
 // Mock ioredis
 vi.mock('ioredis', () => {

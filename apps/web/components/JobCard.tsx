@@ -1,12 +1,6 @@
-import { JobResult } from '@repo/types';
 import { InsightCard } from './InsightCard';
 import { cn } from '@/lib/utils';
 import { Loader2, CheckCircle2, XCircle, Clock } from 'lucide-react';
-// Wait, I saw Card usage in my failed replace attempt but the original file used div. 
-// I will revert to using div to be safe as I didn't check for Card component existence.
-// Actually, the previous view of ProgressDisplay used div. 
-// The original JobCard used div.
-// I'll stick to div to avoid missing dependencies.
 
 interface JobCardProps {
     type: string;
@@ -16,10 +10,6 @@ interface JobCardProps {
 }
 
 export function JobCard({ type, status, result, resultInsight }: JobCardProps) {
-    const isCompleted = status === 'COMPLETED';
-    const isFailed = status === 'FAILED';
-    const isProcessing = status === 'PROCESSING';
-
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'COMPLETED': return 'bg-green-600 text-white border-green-700 shadow-sm';

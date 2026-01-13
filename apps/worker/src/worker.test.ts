@@ -160,7 +160,7 @@ describe('Worker processJob', () => {
                 jobGroupId: 'group-1',
                 a: 10,
                 b: 5,
-                operation: 'UNKNOWN' as any,
+                operation: 'UNKNOWN' as 'ADD',
             },
         } as unknown as Job;
 

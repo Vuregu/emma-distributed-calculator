@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { io, Socket } from 'socket.io-client';
-import { JobResult } from '@repo/types';
+import { io } from 'socket.io-client';
 import { JobCard } from './JobCard';
 import { Progress } from './ui/progress';
 

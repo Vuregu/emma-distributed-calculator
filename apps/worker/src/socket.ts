@@ -1,6 +1,6 @@
 import { Server } from 'socket.io';
 import { Server as HttpServer } from 'http';
-import { PrismaClient } from '@repo/database';
+import { PrismaClient, Job } from '@repo/database';
 
 let io: Server | null = null;
 
@@ -26,7 +26,7 @@ export const initSocket = (httpServer: HttpServer) => {
                     where: { jobGroupId }
                 });
 
-                jobs.forEach((job: any) => {
+                jobs.forEach((job: Job) => {
                     socket.emit('job_update', {
                         jobId: job.id,
                         type: job.type,

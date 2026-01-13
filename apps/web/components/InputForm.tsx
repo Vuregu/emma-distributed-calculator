@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils'; // Assuming Shadcn utils
 
 interface InputFormProps {
     onJobStarted: (jobGroupId: string, jobs: any[], a: number, b: number) => void;

@@ -1,9 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { POST } from './route';
-import { auth } from '@/auth';
-import { prisma } from '@/lib/db';
-import { calculationQueue } from '@/lib/queue';
-import { NextResponse } from 'next/server';
 
 // Define mocks using vi.hoisted to ensure they are available
 const mocks = vi.hoisted(() => {

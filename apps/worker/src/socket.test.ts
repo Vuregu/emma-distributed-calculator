@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { initSocket, getSocketIO } from './socket';
+import { initSocket } from './socket';
 import { Server } from 'socket.io';
 import { createServer } from 'http';
 import { PrismaClient } from '@repo/database';
@@ -52,7 +52,7 @@ vi.mock('@prisma/client', () => {
 });
 
 describe('Socket Server', () => {
-    let mockSocket: any;
+    let mockSocket: { id: string; join: ReturnType<typeof vi.fn>; emit: ReturnType<typeof vi.fn>; on: ReturnType<typeof vi.fn> };
 
     beforeEach(() => {
         vi.clearAllMocks();
@@ -93,7 +93,7 @@ describe('Socket Server', () => {
         initSocket(httpServer);
 
         // Trigger connection handler
-        const connectionCall = mockedIoInstance.on.mock.calls.find((c: any) => c[0] === 'connection');
+        const connectionCall = mockedIoInstance.on.mock.calls.find((c: unknown[]) => c[0] === 'connection');
         const connectionHandler = connectionCall ? connectionCall[1] : undefined;
 
         if (!connectionHandler) throw new Error('Connection handler not found');
@@ -101,7 +101,7 @@ describe('Socket Server', () => {
         connectionHandler(mockSocket);
 
         // Trigger join_job_group handler
-        const joinCall = mockSocket.on.mock.calls.find((c: any) => c[0] === 'join_job_group');
+        const joinCall = mockSocket.on.mock.calls.find((c: unknown[]) => c[0] === 'join_job_group');
         const joinHandler = joinCall ? joinCall[1] : undefined;
 
         if (!joinHandler) throw new Error('join_job_group handler not found');
