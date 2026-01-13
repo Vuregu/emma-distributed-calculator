@@ -14,4 +14,12 @@ describe('Button', () => {
         fireEvent.click(screen.getByText('Click me'));
         expect(handleClick).toHaveBeenCalledTimes(1);
     });
+
+    it('triggers alert by default when onClick is not provided', () => {
+        const alertMock = vi.spyOn(window, 'alert').mockImplementation(() => { });
+        render(<Button appName="test-app">Click me</Button>);
+        fireEvent.click(screen.getByText('Click me'));
+        expect(alertMock).toHaveBeenCalledWith('Hello from your test-app app!');
+        alertMock.mockRestore();
+    });
 });

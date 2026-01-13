@@ -49,8 +49,20 @@ describe('Worker processJob', () => {
 
         await processJob(mockJob);
 
+        // Check if status updated to PROCESSING first
+        expect(mockUpdate).toHaveBeenNthCalledWith(1, expect.objectContaining({
+            where: { id: 'job-1' },
+            data: { status: 'PROCESSING' }
+        }));
+
+        // Check socket emission for PROCESSING
+        expect(mockEmit).toHaveBeenCalledWith('job_update', expect.objectContaining({
+            jobId: 'job-1',
+            status: 'PROCESSING'
+        }));
+
         // Check if calculated result (5+3=8) is updated in DB
-        expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({
+        expect(mockUpdate).toHaveBeenNthCalledWith(2, expect.objectContaining({
             where: { id: 'job-1' },
             data: expect.objectContaining({
                 status: 'COMPLETED',
@@ -59,11 +71,65 @@ describe('Worker processJob', () => {
             })
         }));
 
-        // Check socket emission
+        // Check socket emission for COMPLETED
         expect(mockEmit).toHaveBeenCalledWith('job_update', expect.objectContaining({
             jobId: 'job-1',
             status: 'COMPLETED',
             result: 8
+        }));
+    });
+
+    it('should process SUBTRACT operation correctly', async () => {
+        const mockJob = {
+            data: {
+                jobId: 'job-sub',
+                jobGroupId: 'group-1',
+                a: 10,
+                b: 4,
+                operation: 'SUBTRACT',
+            },
+        } as unknown as Job;
+
+        await processJob(mockJob);
+
+        expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({
+            data: expect.objectContaining({ result: 6 })
+        }));
+    });
+
+    it('should process MULTIPLY operation correctly', async () => {
+        const mockJob = {
+            data: {
+                jobId: 'job-mul',
+                jobGroupId: 'group-1',
+                a: 6,
+                b: 7,
+                operation: 'MULTIPLY',
+            },
+        } as unknown as Job;
+
+        await processJob(mockJob);
+
+        expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({
+            data: expect.objectContaining({ result: 42 })
+        }));
+    });
+
+    it('should process DIVIDE operation correctly', async () => {
+        const mockJob = {
+            data: {
+                jobId: 'job-div',
+                jobGroupId: 'group-1',
+                a: 20,
+                b: 5,
+                operation: 'DIVIDE',
+            },
+        } as unknown as Job;
+
+        await processJob(mockJob);
+
+        expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({
+            data: expect.objectContaining({ result: 4 })
         }));
     });
 
@@ -87,8 +153,25 @@ describe('Worker processJob', () => {
         }));
     });
 
+    it('should reset result to 0 for unknown operation', async () => {
+        const mockJob = {
+            data: {
+                jobId: 'job-unknown',
+                jobGroupId: 'group-1',
+                a: 10,
+                b: 5,
+                operation: 'UNKNOWN' as any,
+            },
+        } as unknown as Job;
+
+        await processJob(mockJob);
+
+        expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({
+            data: expect.objectContaining({ result: 0 })
+        }));
+    });
+
     it('should handle errors gracefully', async () => {
-        // Force an error by creating a circular structure or throwing from a mock
         mockUpdate.mockRejectedValueOnce(new Error('DB Error'));
 
         const mockJob = {
@@ -103,13 +186,15 @@ describe('Worker processJob', () => {
 
         await expect(processJob(mockJob)).rejects.toThrow('DB Error');
 
-        // Check failure emission
-        // Since the first update fails (PROCESSING status), the catch block might run 
-        // OR the initial update fails. 
-        // Wait, the first update is 'PROCESSING'. If that fails, it goes to catch.
-        // In catch, it tries to update to FAILED.
+        // Check if it tried to set status to FAILED
+        expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({
+            where: { id: 'job-3' },
+            data: { status: 'FAILED' }
+        }));
 
-        // Actually, if I mock the *first* update to fail, it enters catch block.
-        // Let's see if the catch block executes the failure update.
+        expect(mockEmit).toHaveBeenCalledWith('job_update', expect.objectContaining({
+            jobId: 'job-3',
+            status: 'FAILED'
+        }));
     });
 });
