@@ -31,7 +31,8 @@ export function ProgressDisplay({ jobGroupId, initialJobs = EMPTY_JOBS, onJobUpd
     }, [initialJobs]);
 
     useEffect(() => {
-        const socket = io('http://localhost:3001'); // Worker URL
+        const workerUrl = process.env.NEXT_PUBLIC_WORKER_URL || 'http://localhost:3001';
+        const socket = io(workerUrl); // Worker URL
 
         socket.emit('join_job_group', jobGroupId);
 
