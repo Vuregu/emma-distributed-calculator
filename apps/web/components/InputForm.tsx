@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils'; // Assuming Shadcn utils
 
 interface InputFormProps {
-    onJobStarted: (jobGroupId: string) => void;
+    onJobStarted: (jobGroupId: string, jobs: any[], a: number, b: number) => void;
 }
 
 export function InputForm({ onJobStarted }: InputFormProps) {
@@ -16,15 +16,17 @@ export function InputForm({ onJobStarted }: InputFormProps) {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
+        const valA = parseFloat(a);
+        const valB = parseFloat(b);
         try {
             const res = await fetch('/api/compute', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ a: parseFloat(a), b: parseFloat(b) })
+                body: JSON.stringify({ a: valA, b: valB })
             });
             const data = await res.json();
             if (data.jobGroupId) {
-                onJobStarted(data.jobGroupId, data.jobs);
+                onJobStarted(data.jobGroupId, data.jobs, valA, valB);
             }
         } catch (error) {
             console.error("Failed to start job", error);

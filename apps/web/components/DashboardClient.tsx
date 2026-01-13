@@ -10,6 +10,7 @@ interface DashboardClientProps {
 }
 
 export function DashboardClient({ initialHistory }: DashboardClientProps) {
+    const [history, setHistory] = useState<any[]>(initialHistory);
     const [activeJobGroupId, setActiveJobGroupId] = useState<string | null>(null);
     const [activeJobs, setActiveJobs] = useState<any[]>([]);
 
@@ -17,13 +18,41 @@ export function DashboardClient({ initialHistory }: DashboardClientProps) {
     // Simplicity: InputForm submission sets active ID.
     // If we select history, we set active ID and active Jobs.
 
-    const handleJobStarted = (id: string, jobs?: any[]) => {
+    const handleJobStarted = (id: string, jobs?: any[], a?: number, b?: number) => {
         setActiveJobGroupId(id);
         if (jobs) {
             setActiveJobs(jobs);
+
+            // If we have input params, it means it's a new job from InputForm. 
+            // Add to history.
+            if (a !== undefined && b !== undefined) {
+                const newHistoryItem = {
+                    id,
+                    createdAt: new Date(), // Now
+                    a,
+                    b,
+                    jobs
+                };
+                setHistory(prev => [newHistoryItem, ...prev]);
+            }
         } else {
             setActiveJobs([]);
         }
+    };
+
+    const handleJobUpdate = (jobGroupId: string, updatedJob: any) => {
+        setHistory(prev => prev.map(group => {
+            if (group.id === jobGroupId) {
+                const updatedJobs = group.jobs.map((job: any) => {
+                    if (job.id === updatedJob.jobId) {
+                        return { ...job, ...updatedJob };
+                    }
+                    return job;
+                });
+                return { ...group, jobs: updatedJobs };
+            }
+            return group;
+        }));
     };
 
     return (
@@ -55,7 +84,11 @@ export function DashboardClient({ initialHistory }: DashboardClientProps) {
                                     {activeJobGroupId}
                                 </span>
                             </div>
-                            <ProgressDisplay jobGroupId={activeJobGroupId} initialJobs={activeJobs} />
+                            <ProgressDisplay
+                                jobGroupId={activeJobGroupId}
+                                initialJobs={activeJobs}
+                                onJobUpdate={handleJobUpdate}
+                            />
                         </div>
                     ) : (
                         <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed rounded-xl border-muted-foreground/25 bg-muted/50 text-center">
@@ -63,7 +96,7 @@ export function DashboardClient({ initialHistory }: DashboardClientProps) {
                         </div>
                     )}
 
-                    <HistoryTable history={initialHistory} onSelect={handleJobStarted} />
+                    <HistoryTable history={history} onSelect={handleJobStarted} />
                 </div>
             </div>
         </div>

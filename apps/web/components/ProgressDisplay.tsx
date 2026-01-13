@@ -9,9 +9,10 @@ import { Progress } from './ui/progress';
 interface ProgressDisplayProps {
     jobGroupId: string;
     initialJobs?: any[]; // Pass initial DB state if available
+    onJobUpdate?: (jobGroupId: string, updatedJob: any) => void;
 }
 
-export function ProgressDisplay({ jobGroupId, initialJobs = [] }: ProgressDisplayProps) {
+export function ProgressDisplay({ jobGroupId, initialJobs = [], onJobUpdate }: ProgressDisplayProps) {
     // We map jobs by ID or Type. Type is easier for the UI grid.
     // Let's assume we know there are 4 types.
     const [jobs, setJobs] = useState<Record<string, any>>({}); // Map type -> Job Data
@@ -31,6 +32,13 @@ export function ProgressDisplay({ jobGroupId, initialJobs = [] }: ProgressDispla
         socket.emit('join_job_group', jobGroupId);
 
         socket.on('job_update', (updatedJob: any) => {
+            console.log("Socket Update Received:", updatedJob);
+
+            // Notify parent to update history/state
+            if (onJobUpdate) {
+                onJobUpdate(jobGroupId, updatedJob);
+            }
+
             setJobs(prev => {
                 const next = { ...prev };
                 const type = updatedJob.type;
