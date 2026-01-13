@@ -1,0 +1,54 @@
+# DigitalOcean App Spec
+name: emma-worker-app
+region: nyc
+services:
+  - name: web
+    image:
+      registry_type: DOCR
+      repository: emma-web
+      tag: latest
+    envs:
+      - key: DATABASE_URL
+        scope: RUN_AND_BUILD
+        value: ${var.DATABASE_URL}
+      - key: NEXTAUTH_SECRET
+        scope: RUN_TIME
+        value: ${var.NEXTAUTH_SECRET}
+      - key: NEXTAUTH_URL
+        scope: RUN_TIME
+        value: ${var.NEXTAUTH_URL}
+      - key: REDIS_HOST
+        scope: RUN_TIME
+        value: ${var.REDIS_HOST}
+      - key: REDIS_PORT
+        scope: RUN_TIME
+        value: "6379"
+      - key: NEXT_PUBLIC_WORKER_URL
+        scope: RUN_AND_BUILD
+        value: ${var.NEXT_PUBLIC_WORKER_URL}
+    http_port: 3000
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    routes:
+      - path: /
+
+  - name: worker
+    image:
+      registry_type: DOCR
+      repository: emma-worker
+      tag: latest
+    envs:
+      - key: DATABASE_URL
+        scope: RUN_TIME
+        value: ${var.DATABASE_URL}
+      - key: REDIS_HOST
+        scope: RUN_TIME
+        value: ${var.REDIS_HOST}
+      - key: REDIS_PORT
+        scope: RUN_TIME
+        value: "6379"
+      - key: OPENAI_API_KEY
+        scope: RUN_TIME
+        value: ${var.OPENAI_API_KEY}
+    instance_count: 1
+    instance_size_slug: basic-xxs
