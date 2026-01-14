@@ -69,9 +69,9 @@ This project is built as a **Turborepo Monorepo**, ensuring code sharing and opt
     ```bash
     npm install
     # db:generate creates the Prisma Client (TypeScript types)
-    npx turbo run db:generate
+    npm run db:generate
     # db:deploy applies the generated migrations to the local database
-    npx turbo run db:deploy
+    npm run db:deploy
     ```
 5.  **Run the Monorepo**:
     ```bash
