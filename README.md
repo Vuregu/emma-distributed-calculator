@@ -52,24 +52,27 @@ This project is built as a **Turborepo Monorepo**, ensuring code sharing and opt
 ### Local Development
 
 1.  **Prerequisites**: Node.js (v20+), Docker (for DBs).
-2.  **Start Infrastructure**:
-    ```bash
-    docker-compose up -d
-    # Starts Postgres (5432) and Redis (6379)
-    ```
-3.  **Install & Generate**:
-    ```bash
-    npm install
-    npx turbo run db:generate
-    npx turbo run db:push # Pushes schema to local Postgres
-    ```
-4.  **Environment Variables**:
+
+2.  **Environment Variables**:
     - Copy `.env.example` to `.env` in `apps/web`, `apps/worker`, and `packages/database` and fill in your secrets:
       ```bash
       cp apps/web/.env.example apps/web/.env
       cp apps/worker/.env.example apps/worker/.env
       cp packages/database/.env.example packages/database/.env
       ```
+3.  **Start Infrastructure**:
+    ```bash
+    docker-compose up -d
+    # Starts Postgres (5432) and Redis (6379)
+    ```
+4.  **Install & Generate**:
+    ```bash
+    npm install
+    # db:generate creates the Prisma Client (TypeScript types)
+    npx turbo run db:generate
+    # db:deploy applies the generated migrations to the local database
+    npx turbo run db:deploy
+    ```
 5.  **Run the Monorepo**:
     ```bash
     npm run dev

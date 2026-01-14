@@ -1,8 +1,8 @@
 
 import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
 import { createServer } from "http";
-import { io as Client } from "socket.io-client";
-import { Server } from "socket.io";
+import { io as Client, Socket as ClientSocket } from "socket.io-client";
+import { Server, Socket as ServerSocket } from "socket.io";
 import { initSocket } from "./socket";
 import jwt from 'jsonwebtoken';
 
@@ -21,9 +21,9 @@ vi.mock("@repo/database", () => {
 
 describe("Socket Server", () => {
     let io: Server;
-    let serverSocket: any;
-    let clientSocket: any;
-    let httpServer: any;
+    let serverSocket: ServerSocket;
+    let clientSocket: ClientSocket;
+    let httpServer: ReturnType<typeof createServer>;
     const TEST_PORT = 4321;
     const TEST_SECRET = "test-secret";
 
