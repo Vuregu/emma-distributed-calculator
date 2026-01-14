@@ -154,15 +154,14 @@ sequenceDiagram
 
 ```mermaid
 graph TD
-    User[Clients] -->|HTTPS| Web["Web App (Next.js)"]
-    User -->|WSS (Socket.io)| Worker["Worker Node"]
+    User[Clients] -->|"HTTPS"| Web["Web App (Next.js)"]
+    User -->|"WSS (Socket.io)"| Worker["Worker Node"]
     
     subgraph Infrastructure
-        Web -->|Read/Write| DB[(PostgreSQL)]
-        Web -->|Enqueue| Redis[(Redis)]
-        Worker -->|Dequeue| Redis
-        Worker -->|Update| DB
-        Worker -->|Verify Tokens| Env["Env Secrets"]
+        Web -->|"Read/Write"| DB[(PostgreSQL)]
+        Web -->|"Enqueue"| Redis[(Redis)]
+        Worker -->|"Dequeue"| Redis
+        Worker -->|"Update"| DB
     end
     
     subgraph External
