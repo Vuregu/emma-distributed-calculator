@@ -4,6 +4,11 @@ import React from 'react';
 import { DashboardClient } from './DashboardClient';
 import { io } from 'socket.io-client';
 
+// Mock server actions
+vi.mock('../lib/actions', () => ({
+    authorizeSocketConnection: vi.fn().mockResolvedValue('mock-token')
+}));
+
 // Mock socket.io-client
 const { mockSocket, socketCallbacks } = vi.hoisted(() => {
     const callbacks: Record<string, Function> = {};
@@ -85,8 +90,17 @@ describe('DashboardClient', () => {
 
         expect(screen.getByTestId('progress-display')).toBeInTheDocument();
 
-        expect(io).toHaveBeenCalled();
-        expect(mockSocket.emit).toHaveBeenCalledWith('join_job_group', 'group-1');
+        // Wait for async auth and socket init
+        await waitFor(() => {
+            expect(io).toHaveBeenCalled();
+        });
+
+        await waitFor(() => {
+            expect(mockSocket.emit).toHaveBeenCalledWith('join_job_group', {
+                jobGroupId: 'group-1',
+                token: 'mock-token'
+            });
+        });
     });
 
     it('updates history and UI when socket receives job update', async () => {
@@ -98,10 +112,14 @@ describe('DashboardClient', () => {
         // Initial state
         expect(screen.getByTestId('job-job-1')).toHaveTextContent('PENDING');
 
+        // Wait for socket connection before testing updates
+        await waitFor(() => {
+            const updateCallback = socketCallbacks['job_update'];
+            expect(updateCallback).toBeDefined();
+        });
+
         // Simulate socket update
         const updateCallback = socketCallbacks['job_update'];
-        expect(updateCallback).toBeDefined();
-
         act(() => {
             if (updateCallback) {
                 // Sending jobId as per updated implementation
@@ -115,7 +133,7 @@ describe('DashboardClient', () => {
         });
     });
 
-    it('handles selecting history item', () => {
+    it('handles selecting history item', async () => {
         const history = [{
             id: 'group-old',
             jobs: [{
@@ -138,13 +156,23 @@ describe('DashboardClient', () => {
         expect(screen.getByTestId('progress-display')).toBeInTheDocument();
         expect(screen.getByTestId('job-job-old-1')).toHaveTextContent('COMPLETED');
 
-        expect(mockSocket.emit).toHaveBeenCalledWith('join_job_group', 'group-old');
+        await waitFor(() => {
+            expect(mockSocket.emit).toHaveBeenCalledWith('join_job_group', {
+                jobGroupId: 'group-old',
+                token: 'mock-token'
+            });
+        });
     });
+
     it('disconnects socket when active group updates or component unmounts', async () => {
         const { unmount } = render(<DashboardClient initialHistory={[]} userId="user-1" />);
 
         fireEvent.click(screen.getByTestId('start-job-btn'));
-        expect(io).toHaveBeenCalledTimes(1);
+
+        await waitFor(() => {
+            expect(io).toHaveBeenCalledTimes(1);
+        });
+
         expect(mockSocket.disconnect).not.toHaveBeenCalled();
 
         // Switch group (simulate by unmounting or potentially starting new job if logic supports it,
@@ -154,4 +182,3 @@ describe('DashboardClient', () => {
         expect(mockSocket.disconnect).toHaveBeenCalled();
     });
 });
-

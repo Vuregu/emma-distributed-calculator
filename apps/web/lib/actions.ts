@@ -1,10 +1,11 @@
 'use server';
 
-import { signIn, signOut } from '@/auth';
+import { signIn, signOut, auth } from '@/auth';
 import { AuthError } from 'next-auth';
 import { z } from 'zod';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/db';
+import jwt from 'jsonwebtoken';
 
 export async function signOutAction() {
     await signOut();
@@ -77,4 +78,43 @@ export async function register(
         }
         throw error;
     }
+}
+
+/**
+ * Authorizes a user to connect to a specific job group's socket room.
+ * Returns a short-lived JWT signed with NEXTAUTH_SECRET.
+ * The token contains the jobGroupId, which the worker will verify.
+ */
+export async function authorizeSocketConnection(jobGroupId: string) {
+    const session = await auth();
+    const userId = session?.user?.id;
+
+    if (!userId) {
+        throw new Error('Unauthorized');
+    }
+
+    // Verify ownership of the job group
+    const jobGroup = await prisma.jobGroup.findFirst({
+        where: {
+            id: jobGroupId,
+            userId: userId
+        }
+    });
+
+    if (!jobGroup) {
+        throw new Error('Forbidden: You do not own this job group');
+    }
+
+    if (!process.env.NEXTAUTH_SECRET) {
+        throw new Error('Server configuration error: NEXTAUTH_SECRET is missing');
+    }
+
+    // Sign a short-lived token (e.g., 30 seconds) just for the handshake
+    const token = jwt.sign(
+        { jobGroupId },
+        process.env.NEXTAUTH_SECRET,
+        { expiresIn: '30s' }
+    );
+
+    return token;
 }

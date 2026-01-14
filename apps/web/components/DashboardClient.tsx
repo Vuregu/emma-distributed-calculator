@@ -7,6 +7,7 @@ import { ProgressDisplay } from './ProgressDisplay';
 import { HistoryTable } from './HistoryTable';
 import { Job, JobGroup } from '@repo/database';
 import { JobResult } from '@repo/types';
+import { authorizeSocketConnection } from '../lib/actions';
 
 interface DashboardClientProps {
     initialHistory: (JobGroup & { jobs: Job[] })[];
@@ -24,20 +25,27 @@ export function DashboardClient({ initialHistory, userId }: DashboardClientProps
     useEffect(() => {
         if (!activeJobGroupId) return;
 
-        const workerUrl = process.env.NEXT_PUBLIC_WORKER_URL || 'http://localhost:3001';
-        const socket = io(workerUrl);
+        let socket: ReturnType<typeof io> | null = null;
 
-        socket.emit('join_job_group', activeJobGroupId);
+        const connect = async () => {
+            try {
+                const token = await authorizeSocketConnection(activeJobGroupId);
 
-        socket.on('job_update', (data: JobResult) => {
-            setHistory(prev => prev.map(group => {
-                if (group.id === activeJobGroupId) {
-                    const jobs = group.jobs;
-                    const jobIndex = jobs.findIndex(j => j.id === data.jobId);
-                    let updatedJobs: Job[];
+                const workerUrl = process.env.NEXT_PUBLIC_WORKER_URL || 'http://localhost:3001';
+                socket = io(workerUrl);
 
-                    if (jobIndex > -1) {
-                        updatedJobs = jobs.map(job =>
+                socket.emit('join_job_group', { jobGroupId: activeJobGroupId, token });
+
+                socket.on('job_update', (data: JobResult) => {
+                    setHistory(prev => prev.map(group => {
+                        if (group.id !== activeJobGroupId) return group;
+
+                        const jobs = group.jobs;
+                        const jobIndex = jobs.findIndex(j => j.id === data.jobId);
+
+                        if (jobIndex === -1) return group;
+
+                        const updatedJobs = jobs.map(job =>
                             job.id === data.jobId ? {
                                 ...job,
                                 status: data.status,
@@ -45,18 +53,21 @@ export function DashboardClient({ initialHistory, userId }: DashboardClientProps
                                 resultInsight: data.resultInsight ?? null
                             } : job
                         );
-                    } else {
-                        updatedJobs = jobs;
-                    }
 
-                    return { ...group, jobs: updatedJobs };
-                }
-                return group;
-            }));
-        });
+                        return { ...group, jobs: updatedJobs };
+                    }));
+                });
+            } catch (error) {
+                console.error("Failed to authorize socket connection:", error);
+            }
+        };
+
+        connect();
 
         return () => {
-            socket.disconnect();
+            if (socket) {
+                socket.disconnect();
+            }
         };
     }, [activeJobGroupId]);
 

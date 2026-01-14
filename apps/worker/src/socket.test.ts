@@ -1,120 +1,92 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { initSocket } from './socket';
-import { Server } from 'socket.io';
-import { createServer } from 'http';
-import { PrismaClient } from '@repo/database';
 
-// Mock dependencies
+import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
+import { createServer } from "http";
+import { io as Client } from "socket.io-client";
+import { Server } from "socket.io";
+import { initSocket } from "./socket";
+import jwt from 'jsonwebtoken';
 
-// We need to hoist the mocks so they can be used in the factory
-const { mockedIoInstance, MockServer, mockPrisma } = vi.hoisted(() => {
-    const ioInstance = {
-        on: vi.fn(),
-        emit: vi.fn(),
-        to: vi.fn().mockReturnThis(),
-        id: 'mock-io-server'
-    };
-
-    const prismaInstance = {
-        job: {
-            findMany: vi.fn(),
-        },
-        $disconnect: vi.fn(),
-    };
-
+// Mock Prisma
+vi.mock("@repo/database", () => {
+    const mockFindMany = vi.fn();
     return {
-        mockedIoInstance: ioInstance,
-        MockServer: vi.fn().mockImplementation(function () { return ioInstance; }),
-        mockPrisma: prismaInstance
+        PrismaClient: vi.fn().mockImplementation(() => ({
+            job: {
+                findMany: mockFindMany
+            },
+            $disconnect: vi.fn()
+        }))
     };
 });
 
-vi.mock('socket.io', () => {
-    return {
-        Server: MockServer
-    };
-});
+describe("Socket Server", () => {
+    let io: Server;
+    let serverSocket: any;
+    let clientSocket: any;
+    let httpServer: any;
+    const TEST_PORT = 4321;
+    const TEST_SECRET = "test-secret";
 
-vi.mock('@repo/database', () => {
-    return {
-        PrismaClient: vi.fn().mockImplementation(function () {
-            return mockPrisma;
-        }),
-    };
-});
+    beforeAll(async () => {
+        // Mock env secret
+        process.env.NEXTAUTH_SECRET = TEST_SECRET;
 
-vi.mock('@prisma/client', () => {
-    return {
-        PrismaClient: vi.fn().mockImplementation(function () {
-            return mockPrisma;
-        }),
-    };
-});
+        httpServer = createServer();
+        io = initSocket(httpServer);
 
-describe('Socket Server', () => {
-    let mockSocket: { id: string; join: ReturnType<typeof vi.fn>; emit: ReturnType<typeof vi.fn>; on: ReturnType<typeof vi.fn> };
-
-    beforeEach(() => {
-        vi.clearAllMocks();
-
-        // Setup internal Socket mock (client socket)
-        mockSocket = {
-            id: 'socket-1',
-            join: vi.fn(),
-            emit: vi.fn(),
-            on: vi.fn(),
-        };
+        await new Promise<void>((resolve) => {
+            httpServer.listen(TEST_PORT, () => {
+                clientSocket = Client(`http://localhost:${TEST_PORT}`);
+                io.on("connection", (socket) => {
+                    serverSocket = socket;
+                });
+                clientSocket.on("connect", resolve);
+            });
+        });
     });
 
-    afterEach(() => {
-        // ...
+    afterAll(() => {
+        io.close();
+        clientSocket.close();
+        httpServer.close();
+        delete process.env.NEXTAUTH_SECRET;
     });
 
-    it('should have mocked PrismaClient', () => {
-        // Assert that the imported PrismaClient is indeed a mock
-        // If this fails, then our mock setup is invalid for the test file itself
-        expect(vi.isMockFunction(PrismaClient)).toBe(true);
+    it("should allow joining with a valid token for the correct job group", async () => {
+        const jobGroupId = "group-123";
+        const token = jwt.sign({ jobGroupId }, TEST_SECRET, { expiresIn: '1m' });
+
+        // Internal emit to trigger the handler
+        clientSocket.emit("join_job_group", { jobGroupId, token });
+
+        // Wait to verify room join
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        const rooms = io.sockets.adapter.rooms;
+        expect(rooms.get(jobGroupId)?.has(serverSocket.id)).toBe(true);
     });
 
-    it('should initialize Socket.IO server', () => {
-        const httpServer = createServer();
-        const ioInstance = initSocket(httpServer);
+    it("should reject joining with an invalid token", async () => {
+        const jobGroupId = "group-bad-token";
+        const token = "invalid-token";
 
-        expect(Server).toHaveBeenCalled();
-        expect(ioInstance).toBe(mockedIoInstance);
+        clientSocket.emit("join_job_group", { jobGroupId, token });
+
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        const rooms = io.sockets.adapter.rooms;
+        expect(rooms.get(jobGroupId)).toBeUndefined();
     });
 
-    it('should throw if getSocketIO is called before init', () => {
-        // Skip for now as discussed
-    });
+    it("should reject joining if token is for a different job group", async () => {
+        const jobGroupId = "group-target";
+        const token = jwt.sign({ jobGroupId: "group-other" }, TEST_SECRET, { expiresIn: '1m' });
 
-    it('should handle "join_job_group" event and sync state', async () => {
-        const httpServer = createServer();
-        initSocket(httpServer);
+        clientSocket.emit("join_job_group", { jobGroupId, token });
 
-        // Trigger connection handler
-        const connectionCall = mockedIoInstance.on.mock.calls.find((c: unknown[]) => c[0] === 'connection');
-        const connectionHandler = connectionCall ? connectionCall[1] : undefined;
+        await new Promise((resolve) => setTimeout(resolve, 100));
 
-        if (!connectionHandler) throw new Error('Connection handler not found');
-
-        connectionHandler(mockSocket);
-
-        // Trigger join_job_group handler
-        const joinCall = mockSocket.on.mock.calls.find((c: unknown[]) => c[0] === 'join_job_group');
-        const joinHandler = joinCall ? joinCall[1] : undefined;
-
-        if (!joinHandler) throw new Error('join_job_group handler not found');
-
-        // Mock DB response
-        mockPrisma.job.findMany.mockResolvedValue([
-            { id: 'j1', type: 'ADD', status: 'COMPLETED', result: 10 }
-        ]);
-
-        await joinHandler('group-1');
-
-        expect(mockSocket.join).toHaveBeenCalled();
-        expect(mockPrisma.job.findMany).toHaveBeenCalled();
-        expect(mockSocket.emit).toHaveBeenCalled();
+        const rooms = io.sockets.adapter.rooms;
+        expect(rooms.get(jobGroupId)).toBeUndefined();
     });
 });

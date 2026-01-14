@@ -1,11 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { authenticate, register } from './actions';
-import { signIn } from '@/auth';
+import { authenticate, register, authorizeSocketConnection } from './actions';
+import { signIn, auth } from '@/auth';
 import { prisma } from '@/lib/db';
 import bcrypt from 'bcryptjs';
 import { AuthError } from 'next-auth';
+import jwt from 'jsonwebtoken';
 
 // Mock dependencies
+vi.mock('jsonwebtoken', () => ({
+    default: {
+        sign: vi.fn(),
+    }
+}));
+
 vi.mock('next-auth', () => ({
     AuthError: class AuthError extends Error {
         type: string;
@@ -18,6 +25,7 @@ vi.mock('next-auth', () => ({
 
 vi.mock('@/auth', () => ({
     signIn: vi.fn(),
+    auth: vi.fn(),
 }));
 
 vi.mock('@/lib/db', () => ({
@@ -25,6 +33,9 @@ vi.mock('@/lib/db', () => ({
         user: {
             findUnique: vi.fn(),
             create: vi.fn(),
+        },
+        jobGroup: {
+            findFirst: vi.fn(),
         },
     },
 }));
@@ -163,6 +174,56 @@ describe('Actions', () => {
             const result = await register(undefined, formData);
 
             expect(result).toBe('Something went wrong logging in after register.');
+        });
+    });
+
+    describe('authorizeSocketConnection', () => {
+        beforeEach(() => {
+            vi.clearAllMocks();
+            process.env.NEXTAUTH_SECRET = 'test-secret';
+        });
+
+        afterEach(() => {
+            delete process.env.NEXTAUTH_SECRET;
+        });
+
+        it('should return a signed token if user owns the job group', async () => {
+            vi.mocked(auth).mockResolvedValueOnce({ user: { id: 'user-1' } } as any);
+            vi.mocked(prisma.jobGroup.findFirst).mockResolvedValueOnce({ id: 'group-1', userId: 'user-1' } as any);
+            vi.mocked(jwt.sign).mockImplementationOnce(() => 'mocked-token' as any);
+
+            const token = await authorizeSocketConnection('group-1');
+
+            expect(token).toBe('mocked-token');
+            expect(jwt.sign).toHaveBeenCalledWith(
+                { jobGroupId: 'group-1' },
+                'test-secret',
+                { expiresIn: '30s' }
+            );
+        });
+
+        it('should throw "Unauthorized" if user is not logged in', async () => {
+            vi.mocked(auth).mockResolvedValueOnce(null);
+
+            await expect(authorizeSocketConnection('group-1'))
+                .rejects.toThrow('Unauthorized');
+        });
+
+        it('should throw "Forbidden" if user does not own the job group', async () => {
+            vi.mocked(auth).mockResolvedValueOnce({ user: { id: 'user-1' } } as any);
+            vi.mocked(prisma.jobGroup.findFirst).mockResolvedValueOnce(null);
+
+            await expect(authorizeSocketConnection('group-1'))
+                .rejects.toThrow('Forbidden: You do not own this job group');
+        });
+
+        it('should throw if NEXTAUTH_SECRET is is missing', async () => {
+            vi.mocked(auth).mockResolvedValueOnce({ user: { id: 'user-1' } } as any);
+            vi.mocked(prisma.jobGroup.findFirst).mockResolvedValueOnce({ id: 'group-1', userId: 'user-1' } as any);
+            delete process.env.NEXTAUTH_SECRET;
+
+            await expect(authorizeSocketConnection('group-1'))
+                .rejects.toThrow('Server configuration error');
         });
     });
 });
