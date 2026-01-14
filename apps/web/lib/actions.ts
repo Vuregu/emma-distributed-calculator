@@ -1,10 +1,14 @@
 'use server';
 
-import { signIn } from '@/auth';
+import { signIn, signOut } from '@/auth';
 import { AuthError } from 'next-auth';
 import { z } from 'zod';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/db';
+
+export async function signOutAction() {
+    await signOut();
+}
 
 export async function authenticate(
     prevState: string | undefined,
