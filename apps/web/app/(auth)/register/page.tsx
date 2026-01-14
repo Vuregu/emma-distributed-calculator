@@ -21,8 +21,9 @@ export default function RegisterPage() {
             <form action={formAction} className="flex w-full max-w-sm flex-col gap-4 p-4 border rounded-lg shadow-md">
                 <h1 className="text-2xl font-bold">Register</h1>
 
-                <label className="block text-sm font-medium">Name</label>
+                <label htmlFor="name" className="block text-sm font-medium">Name</label>
                 <input
+                    id="name"
                     type="text"
                     name="name"
                     placeholder="Emma Worker"
@@ -30,8 +31,9 @@ export default function RegisterPage() {
                     required
                 />
 
-                <label className="block text-sm font-medium">Email</label>
+                <label htmlFor="email" className="block text-sm font-medium">Email</label>
                 <input
+                    id="email"
                     type="email"
                     name="email"
                     placeholder="user@example.com"
@@ -39,8 +41,9 @@ export default function RegisterPage() {
                     required
                 />
 
-                <label className="block text-sm font-medium">Password</label>
+                <label htmlFor="password" className="block text-sm font-medium">Password</label>
                 <input
+                    id="password"
                     type="password"
                     name="password"
                     className="border p-2 rounded"
