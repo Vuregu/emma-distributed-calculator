@@ -39,8 +39,27 @@ jobs:
       - name: Run lint
         run: npm run lint
 
-  build_and_push:
+  migrate:
+    runs-on: ubuntu-latest
     needs: [test, lint]
+    steps:
+        - uses: actions/checkout@v4
+        - name: Install Node.js
+          uses: actions/setup-node@v4
+          with:
+            node-version: 20
+            cache: 'npm'
+        - name: Install dependencies
+          run: npm install
+        - name: Generate Prisma Client
+          run: npx turbo run db:generate
+        - name: Run Migrations
+          run: npx turbo run db:deploy
+          env:
+             DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+  build_and_push:
+    needs: [test, lint, migrate]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     steps:
@@ -77,4 +96,5 @@ jobs:
       # This assumes App Platform is used. If using Droplet/Docker Compose, this would differ.
       - name: Update App Platform
         run: |
-          doctl apps update ${{ secrets.APP_ID }} --spec .do/app.yaml
+          doctl apps create-deployment ${{ secrets.WEB_APP_ID }}
+          doctl apps create-deployment ${{ secrets.WORKER_APP_ID }}
