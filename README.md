@@ -122,12 +122,12 @@ This project implements a **robust, multi-layered security model** designed for 
 
 ```mermaid
 sequenceDiagram
-    participant U as User (Browser)
-    participant W as Web App (Next.js)
+    participant U as "User (Browser)"
+    participant W as "Web App (Next.js)"
     participant DB as Postgres
     participant Q as Redis Queue
     participant WK as Worker
-    participant AI as OpenAI API
+    participant AI as "OpenAI API"
     
     U->>W: POST /compute (Input a, b)
     W->>DB: Create JobGroup & Jobs
@@ -154,19 +154,19 @@ sequenceDiagram
 
 ```mermaid
 graph TD
-    User[Clients] -->|HTTPS| Web[Web App (Next.js)]
-    User -->|WSS (Socket.io)| Worker[Worker Node]
+    User[Clients] -->|HTTPS| Web["Web App (Next.js)"]
+    User -->|WSS (Socket.io)| Worker["Worker Node"]
     
     subgraph Infrastructure
         Web -->|Read/Write| DB[(PostgreSQL)]
         Web -->|Enqueue| Redis[(Redis)]
         Worker -->|Dequeue| Redis
         Worker -->|Update| DB
-        Worker -->|Verify Tokens| Env[Env Secrets]
+        Worker -->|Verify Tokens| Env["Env Secrets"]
     end
     
     subgraph External
-        Worker -->|Generate Insight| OpenAI[OpenAI API]
+        Worker -->|Generate Insight| OpenAI["OpenAI API"]
     end
 ```
 
