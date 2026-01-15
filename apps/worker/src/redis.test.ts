@@ -1,5 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
-import { redisConnection } from './redis';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 // Mock ioredis
 vi.mock('ioredis', () => {
@@ -8,14 +7,39 @@ vi.mock('ioredis', () => {
     };
 });
 
+// Import the mock to check calls
+import { Redis } from 'ioredis';
+
 describe('Redis Connection', () => {
-    it('should create a Redis instance with correct configuration', () => {
-        // This test mainly verifies that the file executed and instantiated Redis.
-        // Since redisConnection is a specific instance, we can check if Redis constructor was called.
+    const originalEnv = process.env;
 
-        // Note: Since redisConnection is a top-level export, it's instantiated when the module is imported.
-        // If we want to test env var handling, we might need to reset modules or check how it was called.
+    beforeEach(() => {
+        vi.clearAllMocks();
+        vi.resetModules();
+        process.env = { ...originalEnv };
+    });
 
-        expect(redisConnection).toBeDefined();
+    afterEach(() => {
+        process.env = originalEnv;
+    });
+
+    it('should create a Redis instance with defaults (no TLS) when REDIS_TLS is not true', async () => {
+        delete process.env.REDIS_TLS;
+
+        await import('./redis.js');
+
+        expect(Redis).toHaveBeenCalledWith(expect.objectContaining({
+            tls: undefined,
+        }));
+    });
+
+    it('should create a Redis instance with TLS config when REDIS_TLS is "true"', async () => {
+        process.env.REDIS_TLS = 'true';
+
+        await import('./redis.js');
+
+        expect(Redis).toHaveBeenCalledWith(expect.objectContaining({
+            tls: {},
+        }));
     });
 });

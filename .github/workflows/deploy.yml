@@ -20,6 +20,8 @@ jobs:
         run: npm install
       - name: Generate Prisma Client
         run: npx turbo run db:generate
+        env:
+          DATABASE_URL: "postgresql://dummy:dummy@localhost:5432/dummy"
       - name: Run tests
         run: npm run test
 
@@ -36,6 +38,8 @@ jobs:
         run: npm install
       - name: Generate Prisma Client
         run: npx turbo run db:generate
+        env:
+          DATABASE_URL: "postgresql://dummy:dummy@localhost:5432/dummy"
       - name: Run lint
         run: npm run lint
 
@@ -51,8 +55,6 @@ jobs:
             cache: 'npm'
         - name: Install dependencies
           run: npm install
-        - name: Generate Prisma Client
-          run: npx turbo run db:generate
         - name: Run Migrations
           run: npx turbo run db:deploy
           env:

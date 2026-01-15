@@ -1,11 +1,9 @@
 import { Worker, Job } from 'bullmq';
 import { redisConnection } from './redis';
-import { PrismaClient } from '@repo/database';
+import { prisma } from './db';
 import { getMathInsight } from './llm';
 import { getSocketIO } from './socket';
 import { JobPayload, JobResult } from '@repo/types';
-
-const prisma = new PrismaClient();
 
 export const processJob = async (job: Job<JobPayload>) => {
     const { jobId, jobGroupId, a, b, operation } = job.data;

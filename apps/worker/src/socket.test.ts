@@ -10,12 +10,15 @@ import jwt from 'jsonwebtoken';
 vi.mock("@repo/database", () => {
     const mockFindMany = vi.fn();
     return {
-        PrismaClient: vi.fn().mockImplementation(() => ({
-            job: {
-                findMany: mockFindMany
-            },
-            $disconnect: vi.fn()
-        }))
+        PrismaClient: vi.fn().mockImplementation(function () {
+            return {
+                job: {
+                    findMany: mockFindMany
+                },
+            };
+        }),
+        PrismaPg: vi.fn(),
+        Pool: vi.fn(),
     };
 });
 

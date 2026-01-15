@@ -61,7 +61,8 @@ export async function register(
                 name,
             },
         });
-    } catch {
+    } catch (error) {
+        console.error('Failed to create user:', error);
         return 'Failed to create user.';
     }
 

@@ -10,6 +10,7 @@
         "REDIS_TLS",
         "JOB_PROCESS_DELAY",
         "DATABASE_URL",
+        "DATABASE_SSL",
         "NEXTAUTH_SECRET",
         "NEXTAUTH_URL",
         "NODE_ENV"

@@ -1,6 +1,7 @@
 import { Server } from 'socket.io';
 import { Server as HttpServer } from 'http';
-import { PrismaClient, Job } from '@repo/database';
+import { Job } from '@repo/database';
+import { prisma } from './db';
 import jwt from 'jsonwebtoken';
 
 let io: Server | null = null;
@@ -39,7 +40,6 @@ export const initSocket = (httpServer: HttpServer) => {
 
                 // Send current state immediately
                 try {
-                    const prisma = new PrismaClient();
                     const jobs = await prisma.job.findMany({
                         where: { jobGroupId }
                     });
@@ -53,7 +53,6 @@ export const initSocket = (httpServer: HttpServer) => {
                             resultInsight: job.resultInsight
                         });
                     });
-                    await prisma.$disconnect();
                 } catch (err) {
                     console.error("Error syncing state:", err);
                 }

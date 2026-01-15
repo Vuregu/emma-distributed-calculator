@@ -28,6 +28,7 @@ COPY --from=builder /app/out/full/ .
 COPY turbo.json turbo.json
 
 # Generate Prisma Client
+ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
 RUN npx turbo run db:generate
 
 # Build-time environment variables

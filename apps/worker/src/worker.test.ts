@@ -13,6 +13,8 @@ vi.mock('@repo/database', () => ({
             job: { update: mockUpdate },
         };
     }),
+    PrismaPg: vi.fn(),
+    Pool: vi.fn(),
 }));
 
 vi.mock('./socket', () => ({
